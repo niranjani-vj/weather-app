@@ -1,7 +1,8 @@
-/** @type {import('tailwindcss').Config} */
+// tailwind.config.js
 module.exports = {
   content: [
-    "./src/**/*.{vue,js,ts,jsx,tsx}", // Adjust paths based on your project structure
+    "./index.html",
+    "./src/**/*.{vue,js,ts,jsx,tsx}" // Ensure it includes all Vue files
   ],
   theme: {
     extend: {},

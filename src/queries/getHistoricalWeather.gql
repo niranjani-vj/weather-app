@@ -1,0 +1,8 @@
+query getHistoricalWeather($city: String!, $from: String!, $to: String!) {
+  getHistoricalWeather(city: $city, from: $from, to: $to) {
+    city
+    date
+    temperature
+    description
+  }
+}

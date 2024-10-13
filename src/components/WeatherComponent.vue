@@ -1,87 +1,172 @@
 <template>
-    <div class="container mx-auto p-4">
-      <h1 class="text-2xl font-bold mb-4">Weather App</h1>
-  
-      <div class="mb-4">
-        <input v-model="city" placeholder="Enter city" class="border p-2 rounded" />
-        <button @click="fetchWeather" class="bg-blue-500 text-white p-2 rounded ml-2">
+    <div class="max-w-md mx-auto mt-10 p-5 bg-white rounded-lg shadow-lg">
+      <h1 class="text-2xl font-bold text-center mb-5">Weather App</h1>
+      <div class="flex items-center justify-center mb-4">
+        <input
+          type="text"
+          v-model="city"
+          placeholder="Enter city"
+          class="border border-gray-300 rounded-lg p-2 w-2/3"
+        />
+        <button
+          @click="fetchWeather"
+          class="ml-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+        >
           Get Weather
         </button>
       </div>
   
-      <!-- Display loading state -->
-      <div v-if="loading" class="text-gray-500">Loading...</div>
-  
-      <!-- Display current weather -->
-      <div v-if="weather" class="p-4 bg-gray-100 rounded">
-        <h2 class="text-xl font-semibold">{{ weather.city }}</h2>
-        <p>Temperature: {{ weather.temperature }}°C</p>
-        <p>Description: {{ weather.description }}</p>
+      <div v-if="weather" class="bg-gray-100 p-4 rounded-lg">
+        <h2 class="text-xl font-semibold mb-2">Today</h2>
+        <p class="text-lg">Temperature: {{ weather.temperature }}°C</p>
+        <p class="text-lg">Condition: {{ weather.description }}</p>
+        <p class="text-lg">Location: {{ weather.city }}</p>
+        <img :src="getWeatherImage(weather.temperature)" alt="Weather Icon" class="mt-3 w-24 mx-auto" />
       </div>
-  
-      <!-- Display error -->
-      <div v-if="error" class="text-red-500 mt-4">{{ error.message }}</div>
     </div>
   </template>
+
+  
+  
   
   <script>
-  import { ref, watch } from 'vue';
-  import { useQuery } from '@vue/apollo-composable';  // Import useQuery
-  import GET_WEATHER from '../queries/getWeather.gql';  // Ensure correct import
-  
+  import axios from 'axios';
+
   export default {
-    setup() {
-      const city = ref('');
-      const weather = ref(null);
-      const error = ref(null);
-      const loading = ref(false);
-  
-    //   // Initialize useQuery with skip to control execution
-    //   const { result, loading: queryLoading } = useQuery(GET_WEATHER, {
-    //     variables: { city: city.value },
-    //     skip: !city.value, // Skip execution until a city is provided
-    //   });
-  
-      // Initialize useQuery with skip to control execution
-      const { result, loading: queryLoading } = useQuery(GET_WEATHER, {
-        variables: { city: city.value },
-        skip: !city.value, // Skip execution until a city is provided
-      });
-  
-      // Watch the result to update local state
-      watch(result, (data) => {
-        if (data && data.value && data.value.getWeather) {
-          weather.value = data.value.getWeather; // Access the data directly
-          error.value = null; // Clear any previous errors
-        } else {
-          error.value = new Error('Weather not found for this city.'); // Handle case where data is null
-        }
-      });
-  
-      // Watch the loading state
-      loading.value = queryLoading; 
-  
-      const fetchWeather = () => {
-        if (!city.value) {
-          error.value = new Error('Please enter a city');
-        }
-        // No need for self-assignment
-      };
-  
+    data() {
       return {
-        city,
-        weather,
-        error,
-        loading,
-        fetchWeather,
+        city: '',
+        weather: null,
+        loading: false,
+        error: null,
       };
     },
+    methods: {
+      async fetchWeather() {
+        this.loading = true;
+        this.error = null;
+        this.weather = null; 
+        const query = `
+          query getWeather($city: String!) {
+            getWeather(city: $city) {
+              city
+              temperature
+              description
+            }
+          }
+        `;
+  
+        try {
+          const response = await axios.post('http://localhost:4000/graphql', {
+            query: query,
+            variables: {
+              city: this.city,
+            },
+          });
+          
+          this.weather = response.data.data.getWeather;
+        } catch (err) {
+          this.error = err.response ? err.response.data.message : err.message;
+        } finally {
+          this.loading = false;
+        }
+      },
+      getWeatherImage(temperature) {
+        if (temperature < 0) {
+            return require('@/assets/snow.png'); // Image for cold weather
+        } else if (temperature >= 0 && temperature < 15) {
+            return require('@/assets/cloudy.png'); // Image for cool weather
+        } else if (temperature >= 15 && temperature < 30) {
+            return require('@/assets/clearsky.png'); // Image for mild weather
+        }else if (temperature > 30 && temperature <= 40) {
+            return require('@/assets/sun.png'); // Image for mild weather
+        }else {
+            return require('@/assets/clearsky.png'); // Image for hot weather
+        }
+    },
+    // },
+//     getWeatherIcon(description) {
+//         console.log(typeof description);
+//         if (!description || typeof description !== 'string') {
+//     return ''; // Return a default class or empty if not valid
+//   }
+//       // Map weather conditions to glyphicon classes
+//       switch (description.toLowerCase()) {
+//         case 'clear sky':
+//           return 'glyphicon glyphicon-sun';
+//         case 'light rain':
+//         case 'shower':
+//           return 'glyphicon glyphicon-cloud';
+//         case 'snow':
+//           return 'glyphicon glyphicon-snowflake';
+//         case 'fog':
+//           return 'glyphicon glyphicon-cloud';
+//         case 'thunderstorm':
+//           return 'glyphicon glyphicon-flash';
+//         default:
+//           return 'glyphicon glyphicon-flash'; // Default case for unrecognized conditions
+//       }
+//     },
+  },
   };
   </script>
   
+    
   <style scoped>
-  .container {
-    max-width: 600px;
-  }
+.app-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.input {
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 80%;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.button {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.button:hover {
+  background-color: #218838;
+}
+
+.loading {
+  font-size: 1.2rem;
+  color: #007bff;
+}
+
+.weather-info {
+  margin-top: 20px;
+}
+
+.weather-title {
+  font-size: 1.5rem;
+}
+
+.description {
+  font-size: 1.2rem;
+}
+
+.weather-icon {
+  width: 100px; /* Adjust size as needed */
+  margin-top: 10px;
+}
   </style>
   

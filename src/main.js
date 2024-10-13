@@ -1,25 +1,25 @@
-import  { createApp, h, provide }  from 'vue';  
-import { ApolloClient, InMemoryCache } from '@apollo/client';  
-import { DefaultApolloClient } from '@vue/apollo-composable';  
-import App from './App.vue';  
+import { createApp } from 'vue';
+import App from './App.vue';
+import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client/core';
+import { ApolloClients } from '@vue/apollo-option';
+import './assets/tailwind.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-// Create Apollo Client instance
+// Create an Apollo Client instance
 const apolloClient = new ApolloClient({
-    uri: 'http://localhost:4000/graphql',
-    cache: new InMemoryCache(),
-    // connectToDevTools: true,  // Enable Apollo DevTools in the browser
-  });
-  
-console.log('Apollo Client:', apolloClient);
-
-// Create the Vue application
-const app = createApp({
-  setup() {
-    // Provide Apollo Client
-    provide(DefaultApolloClient, apolloClient);
-  },
-  render: () => h(App),  // Render the root component
+  link: new HttpLink({
+    uri: 'http://localhost:4000/graphql', // Replace with your GraphQL server URI
+  }),
+  cache: new InMemoryCache(),
 });
 
-// Mount the application
+// Create Vue app
+const app = createApp(App);
+
+// Provide Apollo Client
+app.provide(ApolloClients, {
+  default: apolloClient,
+});
+
+// Mount the app
 app.mount('#app');
